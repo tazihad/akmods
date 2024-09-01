@@ -7,18 +7,13 @@ rpm-ostree install /tmp/akmods/rpms/nvidia-addons-*.rpm
 
 # Enable nvidia-container-toolkit repo
 sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/nvidia-container-toolkit.repo
-sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/negativo17-fedora-nvidia.repo
 
 # Install Nvidia drivers
 rpm-ostree install \
     libnvidia-fbc \
-    libnvidia-ml.i686 \
     libva-nvidia-driver \
-    mesa-vulkan-drivers.i686 \
     nvidia-driver \
     nvidia-driver-cuda \
-    nvidia-driver-cuda-libs.i686 \
-    nvidia-driver-libs.i686 \
     nvidia-modprobe \
     nvidia-persistenced \
     nvidia-settings \

@@ -2,5 +2,13 @@
 
 set -oeux pipefail
 
-curl -L https://negativo17.org/repos/fedora-nvidia.repo \
-    -o /etc/yum.repos.d/negativo17-fedora-nvidia.repo
+rpm-ostree install \
+  "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+  "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+
+rpm-ostree update \
+  --uninstall rpmfusion-free-release \
+  --uninstall rpmfusion-nonfree-release \
+  --install rpmfusion-free-release \
+  --install rpmfusion-nonfree-release
+

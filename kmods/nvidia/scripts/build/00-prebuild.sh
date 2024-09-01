@@ -2,11 +2,11 @@
 
 set -oeux pipefail
 
-rpm-ostree install \
+dnf install \
   "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
   "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
 
-rpm-ostree update \
+dnf update \
   --uninstall rpmfusion-free-release \
   --uninstall rpmfusion-nonfree-release \
   --install rpmfusion-free-release \

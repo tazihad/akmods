@@ -6,8 +6,8 @@ RELEASE="$(rpm -E '%fedora.%_arch')"
 NVIDIA_PACKAGE_NAME="nvidia"
 
 rpm-ostree install \
-    akmod-${NVIDIA_PACKAGE_NAME}*:${NVIDIA_VERSION}.*.fc${RELEASE} \
-    xorg-x11-drv-${NVIDIA_PACKAGE_NAME}-{,cuda,devel,kmodsrc,power}*:${NVIDIA_VERSION}.*.fc${RELEASE} \
+    akmod-${NVIDIA_PACKAGE_NAME}*.*.fc${RELEASE} \
+    xorg-x11-drv-${NVIDIA_PACKAGE_NAME}-{,cuda,devel,kmodsrc,power}*.*.fc${RELEASE} \
     mock
 
 # alternatives cannot create symlinks on its own during a container build

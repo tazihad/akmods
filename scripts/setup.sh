@@ -29,12 +29,11 @@ if [[ "${KERNEL_VERSION}" != "" ]]; then
 fi
 
 curl -LsSf -o /etc/yum.repos.d/fedora-coreos-pool.repo \
-    https://raw.githubusercontent.com/coreos/fedora-coreos-config/testing-devel/fedora-coreos-pool.repo
+    https://raw.githubusercontent.com/coreos/fedora-coreos-config/stable/fedora-coreos-pool.repo
 
 rpm-ostree install \
   kernel-devel \
-  kernel-devel-matched \
-  dnf5
+  kernel-devel-matched
 
 rpm-ostree install \
   akmods \

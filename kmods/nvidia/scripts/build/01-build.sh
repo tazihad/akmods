@@ -3,54 +3,53 @@
 set -oeux pipefail
 
 RELEASE="$(rpm -E '%fedora.%_arch')"
-NVIDIA_PACKAGE_NAME="nvidia"
 
+# Build NVIDIA drivers
 rpm-ostree install \
-    akmod-${NVIDIA_PACKAGE_NAME}*.*.fc${RELEASE} \
-    xorg-x11-drv-${NVIDIA_PACKAGE_NAME}-{,cuda,devel,kmodsrc,power}*.*.fc${RELEASE} \
-    mock
+    akmod-nvidia*:${KMOD_VERSION}.*.fc${RELEASE} \
+    xorg-x11-drv-nvidia-{,cuda,devel,kmodsrc,power}*:${KMOD_VERSION}.*.fc${RELEASE}
 
-# alternatives cannot create symlinks on its own during a container build
-ln -s /usr/bin/ld.bfd /etc/alternatives/ld && ln -s /etc/alternatives/ld /usr/bin/ld
-
-if [[ ! -s "/tmp/certs/private_key.priv" ]]; then
-    echo "WARNING: Using test signing key. Run './generate-akmods-key' for production builds."
-    cp /tmp/certs/private_key.priv{.local,}
-    cp /tmp/certs/public_key.der{.local,}
-else
-    echo "INFO: Using production signing key."
-fi
-
-install -Dm644 /tmp/certs/public_key.der  /etc/pki/akmods/certs/public_key.der
-install -Dm644 /tmp/certs/private_key.priv /etc/pki/akmods/certs/private_key.priv
-
-# Either successfully build and install the kernel modules, or fail early with debug output
 KERNEL_VERSION="$(rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}')"
-NVIDIA_AKMOD_VERSION="$(basename "$(rpm -q "akmod-${NVIDIA_PACKAGE_NAME}" --queryformat '%{VERSION}-%{RELEASE}')" ".fc${RELEASE%%.*}")"
-NVIDIA_LIB_VERSION="$(basename "$(rpm -q "xorg-x11-drv-${NVIDIA_PACKAGE_NAME}" --queryformat '%{VERSION}-%{RELEASE}')" ".fc${RELEASE%%.*}")"
-NVIDIA_FULL_VERSION="$(rpm -q "xorg-x11-drv-${NVIDIA_PACKAGE_NAME}" --queryformat '%{EPOCH}:%{VERSION}-%{RELEASE}.%{ARCH}')"
+NVIDIA_AKMOD_VERSION="$(basename "$(rpm -q "akmod-nvidia" --queryformat '%{VERSION}-%{RELEASE}')" ".fc${RELEASE%%.*}")"
+NVIDIA_LIB_VERSION="$(basename "$(rpm -q "xorg-x11-drv-nvidia" --queryformat '%{VERSION}-%{RELEASE}')" ".fc${RELEASE%%.*}")"
+NVIDIA_FULL_VERSION="$(rpm -q "xorg-x11-drv-nvidia" --queryformat '%{EPOCH}:%{VERSION}-%{RELEASE}.%{ARCH}')"
 
-akmods --force --kernels "${KERNEL_VERSION}" --kmod "${NVIDIA_PACKAGE_NAME}"
+akmods --force --kernels "${KERNEL_VERSION}" --kmod "nvidia"
 
-modinfo /usr/lib/modules/${KERNEL_VERSION}/extra/${NVIDIA_PACKAGE_NAME}/nvidia{,-drm,-modeset,-peermem,-uvm}.ko.xz > /dev/null || \
-(cat /var/cache/akmods/${NVIDIA_PACKAGE_NAME}/${NVIDIA_AKMOD_VERSION}-for-${KERNEL_VERSION}.failed.log && exit 1)
+modinfo /usr/lib/modules/${KERNEL_VERSION}/extra/nvidia/nvidia{,-drm,-modeset,-peermem,-uvm}.ko.xz > /dev/null || \
+(cat /var/cache/akmods/nvidia/${NVIDIA_AKMOD_VERSION}-for-${KERNEL_VERSION}.failed.log && exit 1)
 
-sed -i "s@gpgcheck=0@gpgcheck=1@" /tmp/nvidia-addons/rpmbuild/SOURCES/nvidia-container-toolkit.repo
+# View license information
+modinfo -l /usr/lib/modules/${KERNEL_VERSION}/extra/nvidia/nvidia{,-drm,-modeset,-peermem,-uvm}.ko.xz
 
-install -D /etc/pki/akmods/certs/public_key.der /tmp/nvidia-addons/rpmbuild/SOURCES/public_key.der
+# Build nvidia-addons
+ADDONS_DIR="/tmp/rpm-specs/nvidia-addons"
+mkdir -p ${ADDONS_DIR}/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS,tmp}
+curl -Lo ${ADDONS_DIR}/rpmbuild/SOURCES/nvidia-container-toolkit.repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+curl -Lo ${ADDONS_DIR}/rpmbuild/SOURCES/nvidia-container.pp https://raw.githubusercontent.com/NVIDIA/dgx-selinux/master/bin/RHEL9/nvidia-container.pp
+mv /tmp/files/* ${ADDONS_DIR}/rpmbuild/SOURCES/
+
+sed -i "s@gpgcheck=0@gpgcheck=1@" ${ADDONS_DIR}/rpmbuild/SOURCES/nvidia-container-toolkit.repo
+
+install -D /etc/pki/akmods/certs/public_key.der ${ADDONS_DIR}/rpmbuild/SOURCES/public_key.der
 
 rpmbuild -ba \
-    --define '_topdir /tmp/nvidia-addons/rpmbuild' \
+    --define "_topdir ${ADDONS_DIR}/rpmbuild" \
     --define '%_tmppath %{_topdir}/tmp' \
-    /tmp/nvidia-addons/nvidia-addons.spec
+    ${ADDONS_DIR}/../nvidia-addons.spec
 
+mkdir -p /var/cache/rpms
+cp ${ADDONS_DIR}/rpmbuild/RPMS/noarch/*.rpm /var/cache/rpms
+
+
+# Create a file with the variables needed for the next steps
 cat <<EOF > /var/cache/akmods/nvidia-vars
 KERNEL_VERSION=${KERNEL_VERSION}
 RELEASE=${RELEASE}
-NVIDIA_PACKAGE_NAME=${NVIDIA_PACKAGE_NAME}
-NVIDIA_MAJOR_VERSION=${NVIDIA_VERSION}
+NVIDIA_PACKAGE_NAME=nvidia
+NVIDIA_MAJOR_VERSION=${KMOD_VERSION}
 NVIDIA_FULL_VERSION=${NVIDIA_FULL_VERSION}
 NVIDIA_AKMOD_VERSION=${NVIDIA_AKMOD_VERSION}
 NVIDIA_LIB_VERSION=${NVIDIA_LIB_VERSION}
-RPMFUSION_TESTING_ENABLED=${RPMFUSION_TESTING_ENABLED}
+REPOSITORY_TYPE=${REPOSITORY_TYPE}
 EOF

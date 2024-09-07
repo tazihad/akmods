@@ -33,7 +33,8 @@ curl -LsSf -o /etc/yum.repos.d/fedora-coreos-pool.repo \
 
 rpm-ostree install \
   kernel-devel \
-  kernel-devel-matched
+  kernel-devel-matched \
+  dnf5
 
 rpm-ostree install \
   akmods \

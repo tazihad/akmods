@@ -1,5 +1,5 @@
 [Unit]
-Description=Eternal Linux Nvidia container toolkit CDI auto-generate
+Description=Kandari Linux Nvidia container toolkit CDI auto-generate
 ConditionFileIsExecutable=/usr/bin/nvidia-ctk
 After=local-fs.target
 

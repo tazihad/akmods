@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: "0 0,12 * * *"
+    - cron: '00 12 * * *'  # 6:00 PM Dhaka time (UTC+6) everyday
   pull_request:
   workflow_dispatch:
 

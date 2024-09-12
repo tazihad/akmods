@@ -7,7 +7,7 @@ readonly LANG="${LANG:-en_US.UTF-8}"
 readonly CERT_DIR=_certs
 
 readonly IMAGE="quay.io/fedora-ostree-desktops/base"
-readonly TAG="38"
+readonly TAG="41"
 
 mkdir -p "${PWD}/${CERT_DIR}"
 
@@ -19,7 +19,7 @@ podman run \
     --workdir="/tmp/${CERT_DIR}" \
     --entrypoint=/bin/sh \
     "${IMAGE}:${TAG}" -c \
-    "sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/fedora-{cisco-openh264,modular,updates-modular,updates-archive}.repo && \
+    "sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/fedora-{cisco-openh264,updates-archive}.repo && \
      rpm-ostree install akmods && \
      kmodgenca --auto && \
      cp /etc/pki/akmods/private/private_key.priv private_key.priv.local && \

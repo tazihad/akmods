@@ -1,0 +1,56 @@
+name: Generate Script and Upload Artifacts
+
+on:
+  push:
+    branches:
+      - generate-akmods  # or the branch you want this workflow to run on
+
+jobs:
+  generate-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Generate Bash Script
+        run: |
+          echo '#!/usr/bin/env bash' > generate_script.sh
+          echo '' >> generate_script.sh
+          echo 'set -oeux pipefail' >> generate_script.sh
+          echo '' >> generate_script.sh
+          echo 'readonly LANG="${LANG:-en_US.UTF-8}"' >> generate_script.sh
+          echo '' >> generate_script.sh
+          echo 'readonly CERT_DIR=_certs' >> generate_script.sh
+          echo '' >> generate_script.sh
+          echo 'readonly IMAGE="quay.io/fedora-ostree-desktops/base"' >> generate_script.sh
+          echo 'readonly TAG="41"' >> generate_script.sh
+          echo '' >> generate_script.sh
+          echo 'mkdir -p "${PWD}/${CERT_DIR}"' >> generate_script.sh
+          echo '' >> generate_script.sh
+          echo '# Bootstrap keys with a pre-existing image to avoid touching \'/etc\' or' >> generate_script.sh
+          echo '# installing additional packages on host' >> generate_script.sh
+          echo 'podman run \\' >> generate_script.sh
+          echo '    --env="LANG=${LANG}" \\' >> generate_script.sh
+          echo '    --volume="${PWD}/${CERT_DIR}:/tmp/${CERT_DIR}:z" \\' >> generate_script.sh
+          echo '    --workdir="/tmp/${CERT_DIR}" \\' >> generate_script.sh
+          echo '    --entrypoint=/bin/sh \\' >> generate_script.sh
+          echo '    "${IMAGE}:${TAG}" -c \\' >> generate_script.sh
+          echo '    "sed -i \'s@enabled=1@enabled=0@g\' /etc/yum.repos.d/fedora-{cisco-openh264,modular,updates-modular,updates-archive}.repo && \\' >> generate_script.sh
+          echo '     rpm-ostree install akmods && \\' >> generate_script.sh
+          echo '     kmodgenca --auto && \\' >> generate_script.sh
+          echo '     cp /etc/pki/akmods/private/private_key.priv private_key.priv.local && \\' >> generate_script.sh
+          echo '     cp /etc/pki/akmods/certs/public_key.der public_key.der.local"' >> generate_script.sh
+
+      - name: Make Script Executable
+        run: chmod +x generate_script.sh
+
+      - name: Run Script
+        run: ./generate_script.sh
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated-keys
+          path: |
+            _certs/private_key.priv.local
+            _certs/public_key.der.local

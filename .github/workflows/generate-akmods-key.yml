@@ -4,7 +4,8 @@ on:
   push:
     branches:
       - generate-akmods  # Adjust to the correct branch if necessary
-
+  workflow_dispatch:
+    
 jobs:
   generate-script:
     runs-on: ubuntu-latest

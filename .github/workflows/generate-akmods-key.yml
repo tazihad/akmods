@@ -3,11 +3,12 @@ name: Generate Script and Upload Artifacts
 on:
   push:
     branches:
-      - generate-akmods  # or the branch you want this workflow to run on
+      - generate-akmods  # Adjust to the correct branch if necessary
 
 jobs:
   generate-script:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

@@ -7,7 +7,7 @@ readonly LANG="${LANG:-en_US.UTF-8}"
 readonly CERT_DIR=_certs
 
 readonly IMAGE="quay.io/fedora-ostree-desktops/base"
-readonly TAG="38"
+readonly TAG="41"
 
 mkdir -p "${PWD}/${CERT_DIR}"
 

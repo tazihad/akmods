@@ -1,13 +1,13 @@
-name: Generate Script and Upload Artifacts
+name: Generate and Run Script
 
 on:
   push:
     branches:
       - generate-akmods  # Adjust to the correct branch if necessary
   workflow_dispatch:
-    
+
 jobs:
-  generate-script:
+  generate-and-run:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +29,7 @@ jobs:
           echo '' >> generate_script.sh
           echo 'mkdir -p "${PWD}/${CERT_DIR}"' >> generate_script.sh
           echo '' >> generate_script.sh
-          echo '# Bootstrap keys with a pre-existing image to avoid touching \'/etc\' or' >> generate_script.sh
+          echo '# Bootstrap keys with a pre-existing image to avoid touching '/etc' or' >> generate_script.sh
           echo '# installing additional packages on host' >> generate_script.sh
           echo 'podman run \\' >> generate_script.sh
           echo '    --env="LANG=${LANG}" \\' >> generate_script.sh
@@ -37,7 +37,7 @@ jobs:
           echo '    --workdir="/tmp/${CERT_DIR}" \\' >> generate_script.sh
           echo '    --entrypoint=/bin/sh \\' >> generate_script.sh
           echo '    "${IMAGE}:${TAG}" -c \\' >> generate_script.sh
-          echo '    "sed -i \'s@enabled=1@enabled=0@g\' /etc/yum.repos.d/fedora-{cisco-openh264,modular,updates-modular,updates-archive}.repo && \\' >> generate_script.sh
+          echo '    "sed -i '\''s@enabled=1@enabled=0@g'\'' /etc/yum.repos.d/fedora-{cisco-openh264,modular,updates-modular,updates-archive}.repo && \\' >> generate_script.sh
           echo '     rpm-ostree install akmods && \\' >> generate_script.sh
           echo '     kmodgenca --auto && \\' >> generate_script.sh
           echo '     cp /etc/pki/akmods/private/private_key.priv private_key.priv.local && \\' >> generate_script.sh
@@ -56,3 +56,6 @@ jobs:
           path: |
             _certs/private_key.priv.local
             _certs/public_key.der.local
+
+      - name: Clean Up
+        run: rm -f generate_script.sh
